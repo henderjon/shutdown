@@ -1,4 +1,4 @@
-Copyright (c) 2016, Jon Henderson
+Copyright (c) 2016, Jon Henderson (@henderjon)
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
