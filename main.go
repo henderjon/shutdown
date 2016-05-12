@@ -20,16 +20,16 @@ type Destructor func()
 // SignalChan is a blank channel used to signal a shutdown
 type SignalChan chan struct{}
 
-// init sets up a channel to watch for SIGINT and SIGTERM
-func init() {
+// Watch is our signal watching func. It's worth noting that this is a
+// blocking action so it should be run in a goroutine or as the last function call
+// such that all the other goroutines can continue working while the application
+// sits blocked here.
+// For a deeper discussion of the close channel idiom: http://dave.cheney.net/2013/04/30/curious-channels
+func Watch(shutdown SignalChan, destruct Destructor) {
+
 	sysSigChan = make(chan os.Signal, 1)
 	signal.Notify(sysSigChan, syscall.SIGINT)
 	signal.Notify(sysSigChan, syscall.SIGTERM)
-}
-
-// Watch is our signal watching goroutine. For a deeper discussion of the close channel
-// idiom: http://dave.cheney.net/2013/04/30/curious-channels
-func Watch(shutdown SignalChan, destruct Destructor) {
 
 	var sig os.Signal
 
