@@ -1,35 +1,35 @@
 package main
 
-import(
-	"log"
+import (
+	"fmt"
 	"github.com/henderjon/shutdown"
-	"time"
 	"sync"
+	"time"
 )
 
-func main(){
+func main() {
 
 	var wg sync.WaitGroup
 	signal := make(shutdown.SignalChan)
 
 	wg.Add(1)
-	go func(signal shutdown.SignalChan){
+	go func(signal shutdown.SignalChan) {
 		for {
 			select {
 			case <-signal:
 				time.Sleep(time.Second * 3)
 				wg.Done()
 			default:
-				log.Println("Zzzz")
+				fmt.Println("Zzzz")
 				time.Sleep(time.Second * 3)
 			}
 		}
 	}(signal)
 
 	shutdown.Watch(signal, func() {
-		log.Println("3...2...1...")
+		fmt.Printf("3...2...1... ")
 		wg.Wait()
-		log.Println("and done.")
+		fmt.Printf("and done.\n")
 	})
 
 }

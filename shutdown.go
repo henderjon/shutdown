@@ -8,11 +8,6 @@ import (
 	"time"
 )
 
-var (
-	sysSigChan     chan os.Signal
-	shutdownLogger = log.New(os.Stderr, "", 0) // log to stderr without the timestamps
-)
-
 // Destructor is a func takes no args and returns no values. It is executed as an injectable destructor
 // so that the calling context could use this func to sync.Wait() or print a pretty exit message.
 type Destructor func()
@@ -26,7 +21,7 @@ type SignalChan chan struct{}
 // sits blocked here.
 func Watch(shutdown SignalChan, destruct Destructor) {
 
-	sysSigChan = make(chan os.Signal, 1)
+	sysSigChan := make(chan os.Signal, 1)
 	signal.Notify(sysSigChan, syscall.SIGINT)
 	signal.Notify(sysSigChan, syscall.SIGTERM)
 
@@ -37,9 +32,10 @@ func Watch(shutdown SignalChan, destruct Destructor) {
 		close(shutdown)
 	}
 
-	shutdownLogger.Printf("\n.signal: %s; shutting down...\n", sig.String())
+	shutdownLogger := log.New(os.Stderr, "", 0) // log to stderr without the timestamps
+	shutdownLogger.Printf("\n# signal: %s; shutting down...\n", sig.String())
 	destruct()
-	shutdownLogger.Printf(".shutdown: program exit at %s\n", time.Now().Format(time.RFC3339))
+	shutdownLogger.Println("#", time.Now().Format(time.RFC3339))
 	os.Exit(1)
 }
 
