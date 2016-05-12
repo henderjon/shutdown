@@ -24,7 +24,6 @@ type SignalChan chan struct{}
 // blocking action so it should be run in a goroutine or as the last function call
 // such that all the other goroutines can continue working while the application
 // sits blocked here.
-// For a deeper discussion of the close channel idiom: http://dave.cheney.net/2013/04/30/curious-channels
 func Watch(shutdown SignalChan, destruct Destructor) {
 
 	sysSigChan = make(chan os.Signal, 1)
@@ -35,7 +34,7 @@ func Watch(shutdown SignalChan, destruct Destructor) {
 
 	select { // block until we get a signal
 	case sig = <-sysSigChan:
-		close(shutdown) // idiom via: http://dave.cheney.net/2013/04/30/curious-channels
+		close(shutdown)
 	}
 
 	shutdownLogger.Printf("\n.signal: %s; shutting down...\n", sig.String())
@@ -43,3 +42,5 @@ func Watch(shutdown SignalChan, destruct Destructor) {
 	shutdownLogger.Printf(".shutdown: program exit at %s\n", time.Now().Format(time.RFC3339))
 	os.Exit(1)
 }
+
+// For a deeper discussion of the close channel idiom: http://dave.cheney.net/2013/04/30/curious-channels
