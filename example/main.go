@@ -14,14 +14,19 @@ func main() {
 
 	wg.Add(1)
 	go func(signal shutdown.SignalChan) {
-		for {
+		defer wg.Done()
+		for n := 0; ; n++ {
 			select {
 			case <-signal:
 				time.Sleep(time.Second * 3)
-				wg.Done()
+				return
 			default:
 				fmt.Println("Zzzz")
 				time.Sleep(time.Second * 3)
+			}
+			if n == 5 {
+				shutdown.Now(signal)
+				return
 			}
 		}
 	}(signal)

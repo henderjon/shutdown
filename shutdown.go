@@ -42,7 +42,7 @@ func Watch(shutdown SignalChan, destruct Destructor) {
 }
 
 // Now allows an application to trigger it's own shutdown
-func Now(shutdown SignalChan){
+func Now(shutdown SignalChan) {
 	select {
 	case <-shutdown:
 		return
