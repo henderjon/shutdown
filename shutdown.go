@@ -25,18 +25,30 @@ func Watch(shutdown SignalChan, destruct Destructor) {
 	signal.Notify(sysSigChan, syscall.SIGINT)
 	signal.Notify(sysSigChan, syscall.SIGTERM)
 
-	var sig os.Signal
+	reason := "channel closed"
 
 	select { // block until we get a signal
-	case sig = <-sysSigChan:
+	case sig := <-sysSigChan:
 		close(shutdown)
+		reason = sig.String()
+	case <-shutdown:
 	}
 
 	shutdownLogger := log.New(os.Stderr, "", 0) // log to stderr without the timestamps
-	shutdownLogger.Printf("\n# signal: %s; shutting down...\n", sig.String())
+	shutdownLogger.Printf("\n# signal: %s; shutting down...\n", reason)
 	destruct()
 	shutdownLogger.Println("#", time.Now().Format(time.RFC3339))
 	os.Exit(1)
+}
+
+// Now allows an application to trigger it's own shutdown
+func Now(shutdown SignalChan){
+	select {
+	case <-shutdown:
+		return
+	default:
+		close(shutdown)
+	}
 }
 
 // For a deeper discussion of the close channel idiom: http://dave.cheney.net/2013/04/30/curious-channels
