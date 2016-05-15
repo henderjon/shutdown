@@ -12,13 +12,14 @@ import (
 // so that the calling context could use this func to sync.Wait() or print a pretty exit message.
 type Destructor func()
 
-// SignalChan is a blank channel used to signal a shutdown
+// SignalChan is a blank channel used to signal a shutdown.
 type SignalChan chan struct{}
 
 // Watch is our signal watching func. It's worth noting that this is a
 // blocking action so it should be run in a goroutine or as the last function call
-// such that all the other goroutines can continue working while the application
-// sits blocked here.
+// such that all the other goroutines will continue working while this func blocks.
+// This func also watches for os.Interrupt (syscall.SIGINT) and os.Kill (syscall.SIGKILL)
+// [doc](https://golang.org/pkg/os/#Signal).
 func Watch(shutdown SignalChan, destruct Destructor) {
 
 	sysSigChan := make(chan os.Signal, 1)
@@ -41,7 +42,7 @@ func Watch(shutdown SignalChan, destruct Destructor) {
 	os.Exit(1)
 }
 
-// Now allows an application to trigger it's own shutdown
+// Now allows an application to trigger it's own shutdown.
 func Now(shutdown SignalChan) {
 	select {
 	case <-shutdown:
