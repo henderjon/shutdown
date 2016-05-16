@@ -26,7 +26,7 @@ func Watch(shutdown SignalChan, destruct Destructor) {
 	signal.Notify(sysSigChan, syscall.SIGINT)
 	signal.Notify(sysSigChan, syscall.SIGTERM)
 
-	reason := "channel closed"
+	reason := "SignalChan closed"
 
 	select { // block until we get a signal
 	case sig := <-sysSigChan:
