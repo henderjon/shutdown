@@ -17,7 +17,7 @@ type Shutdown struct {
 	*log.Logger
 }
 
-// New generates a new Shutdown
+// New generates a new Shutdown with typical defaults
 func New(destruct func()) *Shutdown {
 	down := &Shutdown{
 		Signal:   make(chan bool),
@@ -29,10 +29,7 @@ func New(destruct func()) *Shutdown {
 	return down
 }
 
-// Listen is our signal watching func. It's worth noting that this is a
-// blocking action so it should be run in a goroutine or as the last function call
-// such that all the other goroutines will continue working while this func blocks.
-// This func also watches for os.Interrupt (syscall.SIGINT) and os.Kill (syscall.SIGTERM)
+// Listen watches for os.Interrupt (syscall.SIGINT) and os.Kill (syscall.SIGTERM)
 // [doc](https://golang.org/pkg/os/#Signal).
 func (shutdown *Shutdown) listen() {
 
@@ -44,6 +41,7 @@ func (shutdown *Shutdown) listen() {
 	// block for a signal
 	case sig := <-sysSigChan:
 		shutdown.Now(sig.String())
+	// block until the application calls Now()
 	case <-shutdown.Signal:
 	}
 }
