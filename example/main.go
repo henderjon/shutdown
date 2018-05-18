@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"os"
 	"sync"
 	"time"
 
@@ -16,6 +18,8 @@ func destruct() {
 }
 
 func main() {
+
+	log.Println(os.Getpid())
 
 	var wg sync.WaitGroup
 	shutdown := shutdown.New(destruct)
