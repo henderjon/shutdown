@@ -44,7 +44,7 @@ func (shutdown *Shutdown) listen() {
 func (shutdown *Shutdown) Now(reason string) {
 	close(shutdown.toggle)
 	shutdown.destruct()
-	log.Printf("SIG: %s; DATETIME: %s\n", reason, time.Now().UTC().Format(time.RFC3339))
+	log.Printf("sig: %s; datetime: %s\n", reason, time.Now().UTC().Format(time.RFC3339))
 	os.Exit(1)
 }
 
