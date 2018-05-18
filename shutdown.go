@@ -7,10 +7,13 @@ import (
 	"syscall"
 )
 
+const prefixSignal = "signal:"
+
 // Shutdown listens for SIGINT and SIGTERM and executes the Destructor
 type Shutdown struct {
 	Signal   chan bool
 	Destruct func()
+	exit     func(int)
 	*log.Logger
 }
 
@@ -20,6 +23,7 @@ func New(destruct func()) *Shutdown {
 		Signal:   make(chan bool),
 		Destruct: destruct,
 		Logger:   log.New(os.Stderr, "", log.LUTC|log.LstdFlags),
+		exit:     os.Exit, // if we embed this, we can mock it in our test #WINNING
 	}
 	go down.listen()
 	return down
@@ -48,6 +52,6 @@ func (shutdown *Shutdown) listen() {
 func (shutdown *Shutdown) Now(reason string) {
 	close(shutdown.Signal)
 	shutdown.Destruct()
-	shutdown.Println("signal:", reason)
-	os.Exit(1)
+	shutdown.Println(prefixSignal, reason)
+	shutdown.exit(1)
 }
