@@ -10,7 +10,7 @@ import (
 
 const prefixSignal = "signal:"
 
-// Shutdown listens for SIGINT and SIGTERM and executes the Destructor.
+// Shutdown listens for SIGINT and SIGTERM and executes the Destructor
 type Shutdown struct {
 	Destruct func()
 	signal   chan bool
@@ -31,7 +31,7 @@ func New(destruct func()) *Shutdown {
 	return down
 }
 
-// Now allows an application to trigger it's own shutdown.
+// Now allows an application to trigger it's own shutdown
 func (shutdown *Shutdown) Now(reason string) {
 	shutdown.once.Do(func() {
 		shutdown.now(reason)
@@ -48,8 +48,7 @@ func (shutdown *Shutdown) IsDown() bool {
 	}
 }
 
-// Listen watches for os.Interrupt (syscall.SIGINT) and os.Kill (syscall.SIGTERM)
-// [doc](https://golang.org/pkg/os/#Signal).
+// Listen watches for SIGINT SIGTERM [doc](https://golang.org/pkg/os/#Signal)
 func (shutdown *Shutdown) listen() {
 
 	sysSigChan := make(chan os.Signal)
