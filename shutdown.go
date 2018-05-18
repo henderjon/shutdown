@@ -31,7 +31,7 @@ func New(destruct func()) *Shutdown {
 // [doc](https://golang.org/pkg/os/#Signal).
 func (shutdown *Shutdown) listen() {
 
-	sysSigChan := make(chan os.Signal, 1)
+	sysSigChan := make(chan os.Signal)
 	signal.Notify(sysSigChan, syscall.SIGINT)
 	signal.Notify(sysSigChan, syscall.SIGTERM)
 
