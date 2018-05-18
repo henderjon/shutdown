@@ -2,4 +2,10 @@
 [![License: BSD-3](https://img.shields.io/badge/license-BSD--3-blue.svg)](https://img.shields.io/badge/license-BSD--3-blue.svg)
 [![Go Report Card](https://goreportcard.com/badge/github.com/henderjon/shutdown)](https://goreportcard.com/report/github.com/henderjon/shutdown)
 
-A simple shutdown watcher that allows for a global shutdown signal and a destructor.
+A simple shutdown watcher with a destructor.
+
+## TESTING
+
+```
+go run example/main.go
+```

@@ -8,48 +8,44 @@ import (
 	"time"
 )
 
-// Destructor is a func takes no args and returns no values. It is executed as an injectable destructor
-// so that the calling context could use this func to sync.Wait() or print a pretty exit message.
-type Destructor func()
+// Shutdown listens for SIGINT and SIGTERM and executes the Destructor
+type Shutdown struct {
+	toggle   chan bool
+	destruct func()
+}
 
-// SignalChan is a blank channel used to signal a shutdown.
-type SignalChan chan struct{}
+// New generates a new Shutdown
+func New(destruct func()) *Shutdown {
+	down := &Shutdown{
+		toggle:   make(chan bool),
+		destruct: destruct,
+	}
+	go down.listen()
+	return down
+}
 
-// Watch is our signal watching func. It's worth noting that this is a
+// listen is our signal watching func. It's worth noting that this is a
 // blocking action so it should be run in a goroutine or as the last function call
 // such that all the other goroutines will continue working while this func blocks.
-// This func also watches for os.Interrupt (syscall.SIGINT) and os.Kill (syscall.SIGKILL)
+// This func also watches for os.Interrupt (syscall.SIGINT) and os.Kill (syscall.SIGTERM)
 // [doc](https://golang.org/pkg/os/#Signal).
-func Watch(shutdown SignalChan, destruct Destructor) {
+func (shutdown *Shutdown) listen() {
 
 	sysSigChan := make(chan os.Signal, 1)
 	signal.Notify(sysSigChan, syscall.SIGINT)
 	signal.Notify(sysSigChan, syscall.SIGTERM)
 
-	reason := "SignalChan closed"
-
-	select { // block until we get a signal
-	case sig := <-sysSigChan:
-		close(shutdown)
-		reason = sig.String()
-	case <-shutdown:
-	}
-
-	shutdownLogger := log.New(os.Stderr, "", 0) // log to stderr without the timestamps
-	shutdownLogger.Printf("\n# signal: %s; shutting down...\n", reason)
-	destruct()
-	shutdownLogger.Println("#", time.Now().Format(time.RFC3339))
-	os.Exit(1)
+	// block for a signal
+	sig := <-sysSigChan
+	shutdown.Now(sig.String())
 }
 
 // Now allows an application to trigger it's own shutdown.
-func Now(shutdown SignalChan) {
-	select {
-	case <-shutdown:
-		return
-	default:
-		close(shutdown)
-	}
+func (shutdown *Shutdown) Now(reason string) {
+	close(shutdown.toggle)
+	shutdown.destruct()
+	log.Printf("SIG: %s; DATETIME: %s\n", reason, time.Now().UTC().Format(time.RFC3339))
+	os.Exit(1)
 }
 
 // For a deeper discussion of the close channel idiom: http://dave.cheney.net/2013/04/30/curious-channels
