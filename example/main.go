@@ -34,5 +34,5 @@ func main() {
 	}
 
 	wg.Wait()
-	shutdown.Now("test example is over")
+	shutdown.Now("the example is over")
 }
