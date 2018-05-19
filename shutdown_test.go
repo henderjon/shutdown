@@ -24,7 +24,7 @@ func TestShutdown(t *testing.T) {
 
 		shutdown := &Shutdown{
 			signal: make(chan bool),
-			Destruct: func() {
+			Destructor: func() {
 				destructVal = table.val1
 			},
 			exit: func(i int) {

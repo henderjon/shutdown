@@ -12,20 +12,20 @@ const prefixSignal = "signal:"
 
 // Shutdown listens for SIGINT and SIGTERM and executes the Destructor
 type Shutdown struct {
-	Destruct func()
-	signal   chan bool
-	exit     func(int)
-	once     sync.Once
+	Destructor func()
+	signal     chan bool
+	exit       func(int)
+	once       sync.Once
 	*log.Logger
 }
 
 // New generates a new Shutdown with typical defaults
-func New(destruct func()) *Shutdown {
+func New(destructor func()) *Shutdown {
 	down := &Shutdown{
-		signal:   make(chan bool),
-		Destruct: destruct,
-		Logger:   log.New(os.Stderr, "", log.LUTC|log.LstdFlags),
-		exit:     os.Exit, // if we embed this, we can mock it in our test #WINNING
+		signal:     make(chan bool),
+		Destructor: destructor,
+		Logger:     log.New(os.Stderr, "", log.LUTC|log.LstdFlags),
+		exit:       os.Exit, // if we embed this, we can mock it in our test #WINNING
 	}
 	go down.listen()
 	return down
@@ -69,7 +69,7 @@ func (shutdown *Shutdown) listen() {
 // now wraps our shutdown logic in a sync.Once
 func (shutdown *Shutdown) now(reason string) {
 	close(shutdown.signal)
-	shutdown.Destruct()
+	shutdown.Destructor()
 	shutdown.Println(prefixSignal, reason)
 	shutdown.exit(1)
 }
