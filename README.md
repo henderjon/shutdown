@@ -3,9 +3,3 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/henderjon/shutdown)](https://goreportcard.com/report/github.com/henderjon/shutdown)
 
 A simple shutdown watcher with a destructor.
-
-## TESTING
-
-```
-go run example/main.go
-```
