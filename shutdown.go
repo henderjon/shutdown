@@ -14,6 +14,7 @@ const prefixSignal = "signal:"
 type Shutdown struct {
 	Destructor func()
 	signal     chan bool
+	block      chan bool
 	exit       func(int)
 	once       sync.Once
 	*log.Logger
@@ -24,8 +25,9 @@ func New(destructor func()) *Shutdown {
 	down := &Shutdown{
 		signal:     make(chan bool),
 		Destructor: destructor,
-		Logger:     log.New(os.Stderr, "", log.LUTC|log.LstdFlags),
+		Logger:     log.New(os.Stderr, "\n", log.LUTC|log.LstdFlags),
 		exit:       os.Exit, // if we embed this, we can mock it in our test #WINNING
+		block:      make(chan bool),
 	}
 	go down.listen()
 	return down
@@ -48,6 +50,11 @@ func (shutdown *Shutdown) IsDown() bool {
 	}
 }
 
+// Wait is a func that allows the calling context to block until shutdown is finished
+func (shutdown *Shutdown) Wait() {
+	<-shutdown.block
+}
+
 // Listen watches for SIGINT SIGTERM [doc](https://golang.org/pkg/os/#Signal)
 func (shutdown *Shutdown) listen() {
 
@@ -68,8 +75,9 @@ func (shutdown *Shutdown) listen() {
 
 // now wraps our shutdown logic in a sync.Once
 func (shutdown *Shutdown) now(reason string) {
+	shutdown.Println(prefixSignal, reason)
 	close(shutdown.signal)
 	shutdown.Destructor()
-	shutdown.Println(prefixSignal, reason)
+	close(shutdown.block)
 	shutdown.exit(1)
 }

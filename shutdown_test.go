@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"log"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 )
@@ -24,6 +25,7 @@ func TestShutdown(t *testing.T) {
 
 		shutdown := &Shutdown{
 			signal: make(chan bool),
+			block:  make(chan bool),
 			Destructor: func() {
 				destructVal = table.val1
 			},
@@ -54,4 +56,37 @@ func TestShutdown(t *testing.T) {
 			t.Errorf("shutdown.Logger: (-got +want)\n%s", diff)
 		}
 	}
+}
+
+func TestShutdownWait(t *testing.T) {
+	var (
+		count  int
+		logVal bytes.Buffer
+	)
+
+	shutdown := &Shutdown{
+		signal: make(chan bool),
+		block:  make(chan bool),
+		exit: func(i int) {
+			// do nothing
+		},
+		Destructor: func() {
+			count++
+		},
+		Logger: log.New(&logVal, "", 0),
+	}
+
+	go func() {
+		time.Sleep(time.Duration(1) * time.Second)
+		shutdown.Now("")
+		count++
+	}()
+
+	shutdown.Wait()
+	time.Sleep(time.Duration(1) * time.Second)
+
+	if diff := cmp.Diff(count, 2); diff != "" {
+		t.Errorf("shutdown.Wait: (-got +want)\n%s", diff)
+	}
+
 }

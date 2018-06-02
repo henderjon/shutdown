@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/henderjon/shutdown"
@@ -21,18 +20,20 @@ func main() {
 
 	log.Println(os.Getpid())
 
-	var wg sync.WaitGroup
 	shutdown := shutdown.New(destruct)
 
 	for n := 0; n < 13; n++ {
-		wg.Add(1)
 		go func() {
-			defer wg.Done()
 			fmt.Println("Zzzz")
 			time.Sleep(time.Second * 3)
 		}()
 	}
 
-	wg.Wait()
-	shutdown.Now("the example is over")
+	go func() {
+		time.Sleep(time.Duration(4) * time.Second)
+		shutdown.Now("the example is over")
+	}()
+
+	shutdown.Wait()
+
 }
