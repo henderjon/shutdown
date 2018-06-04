@@ -77,7 +77,7 @@ func TestShutdownWait(t *testing.T) {
 	}
 
 	go func() {
-		time.Sleep(time.Duration(1) * time.Second)
+		time.Sleep(time.Duration(2) * time.Second)
 		shutdown.Now("")
 		count++
 	}()
