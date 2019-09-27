@@ -9,11 +9,11 @@ test-vendor:
 	go test -mod=vendor -coverprofile=coverage.out -covermode=count
 
 .PHONY: test
-test:
+test: dep
 	go test -coverprofile=coverage.out -covermode=count
 
 .PHONY: race
-race:
+race: dep
 	go test -race
 
 .PHONY: test-report
