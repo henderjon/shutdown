@@ -3,6 +3,7 @@ package shutdown
 import (
 	"bytes"
 	"log"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -60,7 +61,7 @@ func TestShutdown(t *testing.T) {
 
 func TestShutdownWait(t *testing.T) {
 	var (
-		count  int
+		count  = new(int32)
 		logVal bytes.Buffer
 	)
 
@@ -71,7 +72,7 @@ func TestShutdownWait(t *testing.T) {
 			// do nothing
 		},
 		Destructor: func() {
-			count++
+			atomic.AddInt32(count, 1)
 		},
 		Logger: log.New(&logVal, "", 0),
 	}
@@ -79,13 +80,14 @@ func TestShutdownWait(t *testing.T) {
 	go func() {
 		time.Sleep(time.Duration(2) * time.Second)
 		shutdown.Now("")
-		count++
+		atomic.AddInt32(count, 1)
 	}()
 
 	shutdown.Wait()
 	time.Sleep(time.Duration(1) * time.Second)
 
-	if diff := cmp.Diff(count, 2); diff != "" {
+	c := atomic.LoadInt32(count)
+	if diff := cmp.Diff(c, int32(2)); diff != "" {
 		t.Errorf("shutdown.Wait: (-got +want)\n%s", diff)
 	}
 
