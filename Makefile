@@ -1,11 +1,4 @@
-BIN=vasili
-HEAD=$(shell ([ -n "$${CI_TAG}" ] && echo "$$CI_TAG" || exit 1) || git describe --dirty --long --tags 2> /dev/null || git rev-parse --short HEAD)
-TIMESTAMP=$(shell date '+%Y-%m-%dT%H:%M:%S %z %Z')
-DEPLOYMENT_PATH=s3://myon-deployment/pre-release/$(BIN)/$(BIN)-$(HEAD)
-
-LDFLAGS="-X 'main.buildVersion=$(HEAD)' -X 'main.buildTimestamp=$(TIMESTAMP)' -X 'main.compiledBy=$(shell go version)'" # `-s -w` removes some debugging info that might not be necessary in production (smaller binaries)
-
-all: print
+all: test race
 
 .PHONY: dep
 dep:
