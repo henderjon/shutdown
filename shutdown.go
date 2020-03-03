@@ -17,6 +17,7 @@ type Shutdown struct {
 	block      chan bool
 	exit       func(int)
 	once       sync.Once
+	pid        int
 	*log.Logger
 }
 
@@ -28,9 +29,15 @@ func New(destructor func()) *Shutdown {
 		Logger:     log.New(os.Stderr, "\n", log.LUTC|log.LstdFlags),
 		exit:       os.Exit, // if we embed this, we can mock it in our test #WINNING
 		block:      make(chan bool),
+		pid:        syscall.Getpid(),
 	}
 	go down.listen()
 	return down
+}
+
+// Pid returns the current PID that can be used as a target of messages
+func (shutdown *Shutdown) Pid() int {
+	return shutdown.pid
 }
 
 // Now allows an application to trigger it's own shutdown
