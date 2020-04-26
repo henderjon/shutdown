@@ -2,6 +2,7 @@ package shutdown
 
 import (
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"sync"
@@ -10,9 +11,11 @@ import (
 
 const prefixSignal = "signal:"
 
+type Destructor func()
+
 // Shutdown listens for SIGINT and SIGTERM and executes the Destructor
 type Shutdown struct {
-	Destructor func()
+	Destructor Destructor
 	signal     chan bool
 	block      chan bool
 	exit       func(int)
@@ -22,10 +25,10 @@ type Shutdown struct {
 }
 
 // New generates a new Shutdown with typical defaults
-func New(destructor func()) *Shutdown {
+func New(destruct Destructor) *Shutdown {
 	down := &Shutdown{
 		signal:     make(chan bool),
-		Destructor: destructor,
+		Destructor: destruct,
 		Logger:     log.New(os.Stderr, "\n", log.LUTC|log.LstdFlags),
 		exit:       os.Exit, // if we embed this, we can mock it in our test #WINNING
 		block:      make(chan bool),
@@ -62,6 +65,10 @@ func (shutdown *Shutdown) Wait() {
 	<-shutdown.block
 }
 
+func (shutdown *Shutdown) SetDestructor(destruct Destructor) {
+	shutdown.Destructor = destruct
+}
+
 // Listen watches for SIGINT SIGTERM [doc](https://golang.org/pkg/os/#Signal)
 func (shutdown *Shutdown) listen() {
 
@@ -84,7 +91,20 @@ func (shutdown *Shutdown) listen() {
 func (shutdown *Shutdown) now(reason string) {
 	shutdown.Println(prefixSignal, reason)
 	close(shutdown.signal)
-	shutdown.Destructor()
+	if shutdown.Destructor != nil {
+		shutdown.Destructor()
+	}
 	close(shutdown.block)
 	shutdown.exit(1)
+}
+
+// wraps any request and checks to make sure that the server isn't shutting down
+func (shutdown *Shutdown) Handler(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if shutdown.IsDown() {
+			http.Error(w, "The service is unavailable or shutting down", http.StatusServiceUnavailable)
+		} else {
+			handler.ServeHTTP(w, r)
+		}
+	})
 }
