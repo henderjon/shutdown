@@ -20,7 +20,7 @@ func main() {
 
 	log.Println(os.Getpid())
 
-	shutdown := shutdown.New(destruct)
+	shutdown := shutdown.New(destruct, nil)
 
 	for n := 0; n < 13; n++ {
 		go func() {

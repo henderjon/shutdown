@@ -13,6 +13,8 @@ const prefixSignal = "signal:"
 
 type Destructor func()
 
+type Listener func(chan os.Signal)
+
 // Shutdown listens for SIGINT and SIGTERM and executes the Destructor
 type Shutdown struct {
 	Destructor Destructor
@@ -24,7 +26,7 @@ type Shutdown struct {
 }
 
 // New generates a new Shutdown with typical defaults
-func New(destruct Destructor) *Shutdown {
+func New(destruct Destructor, signals []syscall.Signal) *Shutdown {
 	down := &Shutdown{
 		signal:     make(chan bool),
 		Destructor: destruct,
@@ -32,7 +34,8 @@ func New(destruct Destructor) *Shutdown {
 		exit:       os.Exit, // if we embed this, we can mock it in our test #WINNING
 		block:      make(chan bool),
 	}
-	go down.listen()
+
+	go down.listen(signals)
 	return down
 }
 
@@ -63,11 +66,14 @@ func (shutdown *Shutdown) SetDestructor(destruct Destructor) {
 }
 
 // Listen watches for SIGINT SIGTERM [doc](https://golang.org/pkg/os/#Signal)
-func (shutdown *Shutdown) listen() {
+func (shutdown *Shutdown) listen(signals []syscall.Signal) {
 
-	sysSigChan := make(chan os.Signal)
+	sysSigChan := make(chan os.Signal, 1)
 	signal.Notify(sysSigChan, syscall.SIGINT)
 	signal.Notify(sysSigChan, syscall.SIGTERM)
+	for _, sig := range signals {
+		signal.Notify(sysSigChan, sig)
+	}
 
 	select {
 	// block for a signal
